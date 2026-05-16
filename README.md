@@ -106,7 +106,7 @@ The same core system can be adapted for:
 ## What's in This Repo
 
 ```
-├── leadhunter-ai-workflow.json   # The n8n workflow (import this)
+├── leadhunter-ai.json   # The n8n workflow (import this)
 ├── README.md                     # You're reading it
 └── docs/
     └── setup-guide.md            # Step-by-step setup instructions
@@ -139,7 +139,7 @@ The same core system can be adapted for:
    ```
 
 3. **Import the workflow**
-   - In n8n: Workflows → Import from file → select `leadhunter-ai-workflow.json`
+   - In n8n: Workflows → Import from file → select `leadhunter-ai.json`
 
 4. **Configure credentials**
    - Connect your Apify account to the `search_google_maps` tool
@@ -153,7 +153,7 @@ The same core system can be adapted for:
    - Type: `Find 3 dentists in Lahore`
    - Check your Google Sheet for results
 
-Full step-by-step instructions in [`SETUP-GUIDE.md`].
+Full step-by-step instructions in [`SETUP-GUIDE.md`]
 
 ---
 
