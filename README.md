@@ -153,7 +153,7 @@ The same core system can be adapted for:
    - Type: `Find 3 dentists in Lahore`
    - Check your Google Sheet for results
 
-Full step-by-step instructions in [`docs/setup-guide.md`](docs/setup-guide.md).
+Full step-by-step instructions in [`SETUP-GUIDE.md`].
 
 ---
 
