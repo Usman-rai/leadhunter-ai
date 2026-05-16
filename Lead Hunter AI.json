@@ -1,0 +1,368 @@
+{
+  "name": "Lead Hunter AI",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        352,
+        896
+      ],
+      "id": "9f8aae78-ed6e-4aa6-98eb-965656397091",
+      "name": "Chat Input",
+      "webhookId": "leadhunter-chat"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are LeadHunter AI, a friendly B2B lead generation assistant.\n\n## CRITICAL RULE — READ FIRST\n\nYou have tools, but you DO NOT use them unless the user EXPLICITLY asks to find businesses.\n\nDECISION LOGIC — Follow this every message:\n\n1. Is the user greeting you or chatting? (hi, hello, hey, how are you, what can you do, thanks)\n   → Just reply with text. DO NOT call any tools. DO NOT search anything.\n\n2. Is the user asking what you can do?\n   → Explain your capabilities in text. DO NOT call any tools.\n\n3. Is the user explicitly asking to find/search businesses with a clear profession AND location?\n   (Examples: \"find dentists in Lahore\", \"get me 10 restaurants in Karachi\", \"search plumbers in Islamabad\")\n   → ONLY THEN call the tools.\n\n4. Is the request vague? (e.g., \"find businesses\", \"get leads\", \"search\")\n   → DO NOT call tools. Ask them: \"Sure! What type of business and which city?\"\n\n## WHEN USER JUST SAYS \"HI\" OR SIMILAR\n\nRespond EXACTLY like this (text only, NO tools):\n\n\"Hey! 👋 I'm LeadHunter AI. I help you find and qualify business leads from Google Maps.\n\nJust tell me what you're looking for, like:\n- \"Find 10 dentists in Lahore\"\n- \"Get me 5 restaurants in Karachi\"\n\nI'll find them, analyze their websites, score them as marketing opportunities, and save everything to your Google Sheet.\n\nWhat would you like to search for?\"\n\n## WHEN USER ASKS \"WHAT CAN YOU DO\"\n\nRespond with text only (NO tools):\n\n\"I'm a lead generation assistant 🎯\n\nI can:\n✅ Search Google Maps for any business type in any city\n✅ Analyze each business's website\n✅ Score them 0-100 by marketing opportunity\n✅ Save qualified leads to Google Sheets\n\nTry: \"Find 10 dentists in Lahore\" — and I'll show you what I do!\"\n\n## ONLY WHEN USER GIVES A CLEAR SEARCH REQUEST\n\nSteps:\n1. Confirm you understood: \"On it! Searching for [X] in [Y]...\" \n2. Call search_google_maps with profession, location, count (default 5, max 10)\n3. For each business with a website, call analyze_and_score_website\n4. Score each business based on these rules:\n   - No website: +30\n   - No SSL (http not https): +15\n   - No Instagram in HTML: +10\n   - No Facebook in HTML: +10\n   - No LinkedIn in HTML: +5\n   - Reviews under 20: +10\n   - Rating under 4.0: +10\n   - No email found: +5\n   Priority: 60+ = High 🔥, 35-59 = Medium ⚡, 0-34 = Low 💡\n5. Call save_lead_to_sheet for each business\n6. Reply with a SHORT summary (max 200 words)\n\n## ABSOLUTE RULES\n\n- NEVER call a tool when the user says \"hi\", \"hello\", \"hey\", \"thanks\", \"ok\", or asks a question\n- NEVER search unless the user clearly named a business type AND a location\n- When in doubt, ASK the user — don't assume and search\n- Keep all replies short and friendly\n- Default count is 5 businesses, maximum 10 (to stay fast and within limits)\n\nYour personality: friendly, helpful, efficient. You're a smart assistant who waits for clear instructions before acting."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        768,
+        896
+      ],
+      "id": "054186e6-6535-401d-b2db-ba1f7b0eb032",
+      "name": "AI Parse Request"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        576,
+        1120
+      ],
+      "id": "9d68e557-796f-475f-a3b7-2043dc82e3b3",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "5LdzLlUKyjpKtAJ4",
+          "name": "Groq account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 50
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        704,
+        1120
+      ],
+      "id": "8323db85-e2b0-4399-a0b5-209faac50e20",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to search Google Maps for businesses. Required inputs: \nprofession (like dentist, restaurant), location (city like Lahore, Karachi), \nand count (number of results, default 20). Returns businesses with name, \nphone, website, address, and rating.",
+        "actorSource": "store",
+        "actorId": {
+          "__rl": true,
+          "value": "nwua9Gu5YrADL7ZDj",
+          "mode": "list",
+          "cachedResultName": "Google Maps Scraper (compass/crawler-google-places)",
+          "cachedResultUrl": "https://console.apify.com/actors/nwua9Gu5YrADL7ZDj/input"
+        },
+        "customBody": "={\n  \"searchStringsArray\": [\"{{ $fromAI('search_query', 'The search query like dentist in Lahore', 'string') }}\"],\n  \"locationQuery\": \"{{ $fromAI('location', 'The city or location', 'string') }}\",\n  \"maxCrawledPlacesPerSearch\": 10,\n  \"language\": \"en\",\n  \"scrapePlaceDetailPage\": false,\n  \"scrapeReviewsPersonalData\": false,\n  \"maxReviews\": 0,\n  \"maxImages\": 0,\n  \"scrapeImageAuthors\": false,\n  \"skipClosedPlaces\": true\n}",
+        "timeout": {},
+        "authentication": "apifyOAuth2Api"
+      },
+      "type": "@apify/n8n-nodes-apify.apifyTool",
+      "typeVersion": 1,
+      "position": [
+        832,
+        1120
+      ],
+      "id": "ac575a2d-91e8-43fb-8838-bef03b201ac2",
+      "name": "search_google_maps",
+      "credentials": {
+        "apifyOAuth2Api": {
+          "id": "IWKcClnhnXbizVbY",
+          "name": "Apify OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to save business leads to a Google Sheet.\nRequired inputs: business data including name, phone, email, website, address, rating, score.\nUse this AFTER analyzing businesses, to permanently save the results.",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1dkaoN8nZU8daK9qAJuaRHYiCifHym5xmRGvC2nYHH2w",
+          "mode": "list",
+          "cachedResultName": "google sheet ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dkaoN8nZU8daK9qAJuaRHYiCifHym5xmRGvC2nYHH2w/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "=https://docs.google.com/spreadsheets/d/1dkaoN8nZU8daK9qAJuaRHYiCifHym5xmRGvC2nYHH2w/edit?gid=59516513#gid=59516513",
+          "mode": "url"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Business Name": "={{ $fromAI('business_name', 'Name of the business', 'string') }}",
+            "Phone": "={{ $fromAI('phone', 'Phone number', 'string') }}",
+            "Email": "={{ $fromAI('email', 'Email address found on website', 'string') }}",
+            "Website": "={{ $fromAI('website', 'Business website URL', 'string') }}",
+            "Address": "={{ $fromAI('address', 'Business address', 'string') }}",
+            "Rating": "={{ $fromAI('rating', 'Star rating like 4.5', 'string') }}",
+            "Reviews": "={{ $fromAI('reviews_count', 'Number of reviews', 'string') }}",
+            "Opportunity Score": "={{ $fromAI('opportunity_score', 'Score from 0 to 100', 'string') }}",
+            "Priority": "={{ $fromAI('priority', 'High Medium or Low', 'string') }}",
+            "Opportunities": "={{ $fromAI('opportunities', 'List of marketing opportunities', 'string') }}",
+            "Date Added": "={{ $now.format('yyyy-MM-dd') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviews",
+              "displayName": "Reviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Opportunity Score",
+              "displayName": "Opportunity Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Opportunities",
+              "displayName": "Opportunities",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Added",
+              "displayName": "Date Added",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        960,
+        1120
+      ],
+      "id": "98927d66-6686-4bdc-aa73-6ca03f484874",
+      "name": "save_lead_to_sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xShGg0CvuK8f41zQ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Fetches a business website and analyzes it for marketing opportunities. \nReturns: HTML content + email count + social media presence indicators.\nRequired input: url (the business website URL).\nCall this for each business that has a website AFTER search_google_maps.",
+        "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('URL', `The website URL to fetch`, 'string') }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Include_Response_Headers_and_Status', ``, 'boolean') }}",
+              "responseFormat": "text",
+              "outputPropertyName": "htmlContent"
+            }
+          },
+          "timeout": 10000
+        },
+        "optimizeResponse": true,
+        "responseType": "text",
+        "truncateResponse": true,
+        "maxLength": 3000
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        1088,
+        1120
+      ],
+      "id": "e86615c1-beb3-4dbc-860a-2debe787c42c",
+      "name": "analyze_and_score_website"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Input": {
+      "main": [
+        [
+          {
+            "node": "AI Parse Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Parse Request": {
+      "main": [
+        []
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Parse Request",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Parse Request",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_google_maps": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Parse Request",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save_lead_to_sheet": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Parse Request",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "analyze_and_score_website": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Parse Request",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b6eda445-722f-4dc6-a3db-b7190dd15c3b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4a9a0098adc5fcbc94f50fbe5fe11f21463946307d2bdfad8b69957f7785caba"
+  },
+  "id": "UCQl310Ptak2AZAu",
+  "tags": []
+}
