@@ -4,6 +4,8 @@
 
 **Built with:** n8n · Groq AI (Llama 3.3 70B) · Apify · Google Sheets
 
+![LeadHunter AI Demo](demo.png)
+
 ---
 
 ## What It Does
@@ -41,7 +43,7 @@ LeadHunter AI turns that into a 60-second chat message. And it doesn't just retu
 Every business gets a score from **0–100**. Higher score = more services needed = better lead.
 
 | Signal Detected | Points |
-|-----------------|--------|
+| --- | --- |
 | No website at all | +30 |
 | Website has no SSL (http not https) | +15 |
 | No Instagram link found | +10 |
@@ -52,6 +54,7 @@ Every business gets a score from **0–100**. Higher score = more services neede
 | No public email found | +5 |
 
 **Priority Labels:**
+
 - 🔥 **High (60–100):** Major opportunity — needs multiple services
 - ⚡ **Medium (35–59):** Some gaps — needs 1–2 services
 - 💡 **Low (0–34):** Already well-optimized
@@ -63,17 +66,18 @@ Every business gets a score from **0–100**. Higher score = more services neede
 This is built as an **AI agent with tools** — not a fixed pipeline. The AI decides which tools to call based on what the user asks. This makes it conversational and flexible.
 
 ```
-        [Chat Trigger]
-              │
-        [AI Agent] ──── Brain: Groq Chat Model (Llama 3.3 70B)
-              │     └─── Memory: Conversation buffer
-              │
-              ├──🔧 search_google_maps      (Apify - scrape Google Maps)
-              ├──🔧 analyze_and_score_website (HTTP - fetch & analyze sites)
-              └──🔧 save_lead_to_sheet       (Google Sheets - store leads)
+[Chat Trigger]
+      │
+[AI Agent] ──── Brain: Groq Chat Model (Llama 3.3 70B)
+      │     └─── Memory: Conversation buffer
+      │
+      ├──🔧 search_google_maps        (Apify - scrape Google Maps)
+      ├──🔧 analyze_and_score_website (HTTP - fetch & analyze sites)
+      └──🔧 save_lead_to_sheet        (Google Sheets - store leads)
 ```
 
 Because it's an agent (not a script):
+
 - It only acts when given a clear request
 - It chains tools intelligently (search → analyze → save)
 - The same agent could plug into other interfaces (WhatsApp, web widget, etc.)
@@ -83,7 +87,7 @@ Because it's an agent (not a script):
 ## Tech Stack
 
 | Tool | Role | Cost |
-|------|------|------|
+| --- | --- | --- |
 | **n8n** (cloud) | Workflow automation & AI agent host | Free tier |
 | **Groq (Llama 3.3 70B)** | The agent's reasoning brain | Free tier |
 | **Apify** (Google Maps Scraper) | Reliable Google Maps data | ~$5 = 1000 leads |
@@ -106,10 +110,10 @@ The same core system can be adapted for:
 ## What's in This Repo
 
 ```
-├── leadhunter-ai.json   # The n8n workflow (import this)
+├── leadhunter-ai-workflow.json   # The n8n workflow (import this)
 ├── README.md                     # You're reading it
-└── docs/
-    └── setup-guide.md            # Step-by-step setup instructions
+├── SETUP-GUIDE.md                # Step-by-step setup instructions
+└── demo.png                      # Demo screenshot
 ```
 
 ---
@@ -133,13 +137,14 @@ The same core system can be adapted for:
 2. **Prepare the Google Sheet**
 
    Add these column headers in row 1:
+
    ```
-   Business Name | Phone | Email | Website | Address | Rating | 
+   Business Name | Phone | Email | Website | Address | Rating |
    Reviews | Opportunity Score | Priority | Opportunities | Date Added
    ```
 
 3. **Import the workflow**
-   - In n8n: Workflows → Import from file → select `leadhunter-ai.json`
+   - In n8n: Workflows → Import from file → select `leadhunter-ai-workflow.json`
 
 4. **Configure credentials**
    - Connect your Apify account to the `search_google_maps` tool
@@ -153,21 +158,21 @@ The same core system can be adapted for:
    - Type: `Find 3 dentists in Lahore`
    - Check your Google Sheet for results
 
-Full step-by-step instructions in [`SETUP-GUIDE.md`]
+Full step-by-step instructions in [SETUP-GUIDE.md](SETUP-GUIDE.md).
 
 ---
-
-
 
 ## Honest Notes & Limitations
 
 **What it does well:**
+
 - Finds local businesses fast
 - Identifies real marketing opportunities
 - Builds prioritized lead lists
 - Conversational, flexible interface
 
 **Current limitations:**
+
 - Email extraction works ~40–60% of the time (many sites hide emails)
 - Groq free tier has rate limits — best with small batches (3–10 leads per search)
 - Some websites block automated visits (handled gracefully — business still saved)
@@ -213,3 +218,4 @@ MIT — Free for personal and commercial use. Attribution appreciated.
 ---
 
 ⭐ If this saved you hours of manual prospecting, consider giving it a star.
+
